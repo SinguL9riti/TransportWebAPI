@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Маршруты</title>
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Список маршрутов</h2>
+        <form name="routeForm">
+            <table border="0">
+                <tr>
+                    <td>
+                        <label for="routeId" id="typeCRUD" name="typeCRUD">Добавить маршрут:</label>
+                        <input type="hidden" id="Id" name="Id" value="0" />
+                        <div class="form-group">
+                            <label for="Name">Название маршрута:</label>
+                            <input class="form-control" name="Name" id="Name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="TransportType">Тип транспорта:</label>
+                            <select id="TransportType" name="TransportType">
+                                <option value="0">(выбор)</option>
+                                <option value="Bus">Автобус</option>
+                                <option value="Trolleybus">Троллейбус</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="PlannedTravelTime">Продолжительность (мин):</label>
+                            <input class="form-control" name="PlannedTravelTime" id="PlannedTravelTime" />
+                        </div>
+                        <div class="form-group">
+                            <label for="Distance">Дистанция (км):</label>
+                            <input class="form-control" name="Distance" id="Distance" />
+                        </div>
+                        <div class="form-group">
+                            <label for="IsExpress">Экспресс-маршрут:</label>
+                            <input type="checkbox" name="IsExpress" id="IsExpress" />
+                        </div>
+                    </td>
+                    <td>
+                        <a id="filter" class="btn btn-sm btn-primary">Загрузить</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="panel-body">
+                            <button id="saveBtn" type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                            <a id="reset" class="btn btn-sm btn-primary">Сбросить</a>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <table class="table table-condensed table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Код</th>
+                    <th>Название</th>
+                    <th>Тип транспорта</th>
+                    <th>Продолжительность</th>
+                    <th>Дистанция</th>
+                    <th>Экспресс</th>
+                    <th>Действие</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="data"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Получение всех маршрутов
+        async function GetRoutes() {
+            const response = await fetch("/api/routes", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok) {
+                const routes = await response.json();
+                const rows = document.querySelector("table tbody#data");
+                routes.forEach(route => rows.append(row(route)));
+            }
+        }
+
+        // Получение одного маршрута
+        async function GetRoute(id) {
+            const response = await fetch('/api/routes/' + id, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok) {
+                const route = await response.json();
+                const form = document.forms["routeForm"];
+                form.elements["Id"].value = route.routeId;
+                form.elements["Name"].value = route.name;
+                form.elements["TransportType"].value = route.transportType;
+                form.elements["PlannedTravelTime"].value = route.plannedTravelTime;
+                form.elements["Distance"].value = route.distance;
+                form.elements["IsExpress"].checked = route.isExpress;
+            }
+        }
+
+        // Добавление маршрута
+        async function CreateRoute(Name, TransportType, PlannedTravelTime, Distance, IsExpress) {
+            const response = await fetch("/api/routes", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({ Name, TransportType, PlannedTravelTime: parseInt(PlannedTravelTime), Distance: parseFloat(Distance), IsExpress })
+            });
+            if (response.ok) {
+                const route = await response.json();
+                reset();
+                document.querySelector("table tbody#data").append(row(route));
+            }
+        }
+
+        // Изменение маршрута
+        async function EditRoute(Id, Name, TransportType, PlannedTravelTime, Distance, IsExpress) {
+            const response = await fetch("/api/routes", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({ Id, Name, TransportType, PlannedTravelTime: parseInt(PlannedTravelTime), Distance: parseFloat(Distance), IsExpress })
+            });
+            if (response.ok) {
+                const route = await response.json();
+                reset();
+                document.querySelector(`tr[data-rowid='${route.routeId}']`).replaceWith(row(route));
+            }
+        }
+
+        // Удаление маршрута
+        async function DeleteRoute(id) {
+            const response = await fetch("/api/routes/" + id, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok) {
+                document.querySelector(`tr[data-rowid='${id}']`).remove();
+            }
+        }
+
+        // Сброс формы
+        function reset() {
+            const form = document.forms["routeForm"];
+            form.reset();
+            form.elements["Id"].value = 0;
+            document.getElementById("typeCRUD").innerHTML = "Добавить маршрут:";
+        }
+
+        // Создание строки таблицы
+        function row(route) {
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", route.routeId);
+
+            tr.innerHTML = `
+                    <td>${route.routeId}</td>
+                    <td>${route.name}</td>
+                    <td>${route.transportType}</td>
+                    <td>${route.plannedTravelTime}</td>
+                    <td>${route.distance}</td>
+                    <td>${route.isExpress ? "Да" : "Нет"}</td>
+                    <td><a class="editLink" data-id="${route.routeId}">Изменить</a></td>
+                    <td><a class="removeLink" data-id="${route.routeId}">Удалить</a></td>
+                `;
+
+            tr.querySelector(".editLink").addEventListener("click", async () => await GetRoute(route.routeId));
+            tr.querySelector(".removeLink").addEventListener("click", async () => await DeleteRoute(route.routeId));
+
+            return tr;
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await GetRoutes();
+
+            const form = document.forms["routeForm"];
+            form.addEventListener("submit", async e => {
+                e.preventDefault();
+                const Id = form.elements["Id"].value;
+                const Name = form.elements["Name"].value;
+                const TransportType = form.elements["TransportType"].value;
+                const PlannedTravelTime = form.elements["PlannedTravelTime"].value;
+                const Distance = form.elements["Distance"].value;
+                const IsExpress = form.elements["IsExpress"].checked;
+
+                if (Id === "0") {
+                    await CreateRoute(Name, TransportType, PlannedTravelTime, Distance, IsExpress);
+                } else {
+                    await EditRoute(Id, Name, TransportType, PlannedTravelTime, Distance, IsExpress);
+                }
+            });
+
+            document.getElementById("reset").addEventListener("click", reset);
+        });
+    </script>
+</body>
+</html>

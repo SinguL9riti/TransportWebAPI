@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Маршруты</title>
+    <link href="lib/bootstrap/css/bootstrap.css" rel="stylesheet" />
+    <script src="lib/jquery/dist/jquery.js"></script>
+    <script src="lib/jquery-ui/jquery-ui.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Список маршрутов</h2>
+        <form name="routeForm">
+            <table class="table">
+                <tr>
+                    <td>
+                        <input type="hidden" id="Id" name="Id" value="0" />
+                        <div class="form-group">
+                            <label for="name">Название маршрута:</label>
+                            <input class="form-control" name="name" id="name" />
+                        </div>
+                        <div class="form-group">
+                            <label for="transportType">Тип транспорта:</label>
+                            <select class="form-control" id="transportType" name="transportType">
+                                <option value="Автобус">Автобус</option>
+                                <option value="Троллейбус">Троллейбус</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group">
+                            <label for="distance">Дистанция (км):</label>
+                            <input class="form-control" name="distance" id="distance" type="number" step="0.1" />
+                        </div>
+                        <div class="form-group">
+                            <label for="plannedTravelTime">Продолжительность (мин):</label>
+                            <input class="form-control" name="plannedTravelTime" id="plannedTravelTime" type="number" />
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isExpress" name="isExpress" />
+                            <label class="form-check-label" for="isExpress">Экспресс</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" id="reset" class="btn btn-secondary">Сбросить</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Тип транспорта</th>
+                    <th>Дистанция (км)</th>
+                    <th>Продолжительность (мин)</th>
+                    <th>Экспресс</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody id="data"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function GetRoutes() {
+            $.ajax({
+                url: '/api/routes',
+                type: 'GET',
+                contentType: "application/json",
+                success: function (routes) {
+                    var rows = "";
+                    $.each(routes, function (index, route) {
+                        rows += row(route);
+                    });
+                    $("#data").html(rows);
+                }
+            });
+        }
+
+        function GetRoute(id) {
+            $.ajax({
+                url: '/api/routes/' + id,
+                type: 'GET',
+                contentType: "application/json",
+                success: function (route) {
+                    var form = document.forms["routeForm"];
+                    form.elements["Id"].value = route.Id;
+                    form.elements["name"].value = route.name;
+                    form.elements["transportType"].value = route.transportType;
+                    form.elements["distance"].value = route.distance;
+                    form.elements["plannedTravelTime"].value = route.plannedTravelTime;
+                    form.elements["isExpress"].checked = route.isExpress;
+                }
+            });
+        }
+
+        function CreateRoute(name, transportType, distance, plannedTravelTime, isExpress) {
+            $.ajax({
+                url: "/api/routes",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    name: name,
+                    transportType: transportType,
+                    distance: parseFloat(distance),
+                    plannedTravelTime: parseInt(plannedTravelTime),
+                    isExpress: isExpress
+                }),
+                success: function (route) {
+                    reset();
+                    $("#data").append(row(route));
+                }
+            });
+        }
+
+        function EditRoute(Id, name, transportType, distance, plannedTravelTime, isExpress) {
+            $.ajax({
+                url: "/api/routes",
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    Id: parseInt(Id),
+                    name: name,
+                    transportType: transportType,
+                    distance: parseFloat(distance),
+                    plannedTravelTime: parseInt(plannedTravelTime),
+                    isExpress: isExpress
+                }),
+                success: function (route) {
+                    reset();
+                    $("tr[data-rowid='" + route.Id + "']").replaceWith(row(route));
+                }
+            });
+        }
+
+        function DeleteRoute(id) {
+            $.ajax({
+                url: "/api/routes/" + id,
+                type: "DELETE",
+                success: function () {
+                    $("tr[data-rowid='" + id + "']").remove();
+                }
+            });
+        }
+
+        function reset() {
+            var form = document.forms["routeForm"];
+            form.reset();
+            form.elements["Id"].value = 0;
+        }
+
+        function row(route) {
+            return `<tr data-rowid='${route.Id}'>
+                            <td>${route.Id}</td>
+                            <td>${route.name}</td>
+                            <td>${route.transportType}</td>
+                            <td>${route.distance}</td>
+                            <td>${route.plannedTravelTime}</td>
+                            <td>${route.isExpress ? "Да" : "Нет"}</td>
+                            <td>
+                                <a class='editLink' data-id='${route.Id}'>Изменить</a> |
+                                <a class='removeLink' data-id='${route.Id}'>Удалить</a>
+                            </td>
+                        </tr>`;
+        }
+
+        $("#reset").click(function () {
+            reset();
+        });
+
+        $("form").submit(function (e) {
+            e.preventDefault();
+            var form = this;
+            var Id = form.elements["Id"].value;
+            var name = form.elements["name"].value;
+            var transportType = form.elements["transportType"].value;
+            var distance = form.elements["distance"].value;
+            var plannedTravelTime = form.elements["plannedTravelTime"].value;
+            var isExpress = form.elements["isExpress"].checked;
+
+            if (Id == 0) {
+                CreateRoute(name, transportType, distance, plannedTravelTime, isExpress);
+            } else {
+                EditRoute(Id, name, transportType, distance, plannedTravelTime, isExpress);
+            }
+        });
+
+        $("body").on("click", ".editLink", function () {
+            var id = $(this).data("id");
+            GetRoute(id);
+        });
+
+        $("body").on("click", ".removeLink", function () {
+            var id = $(this).data("id");
+            DeleteRoute(id);
+        });
+
+        GetRoutes();
+    </script>
+</body>
+</html>
