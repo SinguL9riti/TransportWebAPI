@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransportWebAPI", "TransportWebAPI\TransportWebAPI.csproj", "{C2CED4DF-EBE3-413C-AD65-9F83504BE215}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{1C550028-8349-45B4-A64A-67EBB4B748D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{C2CED4DF-EBE3-413C-AD65-9F83504BE215}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2CED4DF-EBE3-413C-AD65-9F83504BE215}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2CED4DF-EBE3-413C-AD65-9F83504BE215}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C550028-8349-45B4-A64A-67EBB4B748D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C550028-8349-45B4-A64A-67EBB4B748D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C550028-8349-45B4-A64A-67EBB4B748D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C550028-8349-45B4-A64A-67EBB4B748D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
